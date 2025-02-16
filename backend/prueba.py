@@ -10,6 +10,36 @@ que debenmos de hacer?
 despues debo de hacer que el usuario pueda ingresar los numeros y la operacion que desea hacer y que el programa le devuelva el resultado de la operacion que el usuario desea hacer con los numeros que ingreso
 
 '''
+#esto tambien se puede hacer con un diccionario
+
+diccionario = {
+    "suma" : lambda a,b: a+b, #esto es una funcion anonima
+    "resta": lambda a,b: a-b,
+    "multiplicacion": lambda a,b: a*b,
+    "division": lambda a,b: a/b
+}
+
+#ahora como puedo hacer que el usuario ingrese los numeros y la operacion que desea hacer y el resultado sea con el diccionario
+
+print("Bienvenido a la calculadora")
+print("1. Suma")
+print("2. Resta")
+print("3. Multiplicacion")
+print("4. Division")
+opcion= int(input("Ingrese el numero de la operacion que desea hacer: "))
+num1 = int(input("Ingrese el primer numero: "))
+num2 = int(input("Ingrese el segundo numero: "))
+if opcion == 1:
+    print(diccionario["suma"](num1, num2))
+elif opcion == 2:
+    print(diccionario["resta"](num1, num2))
+elif opcion == 3:
+    print(diccionario["multiplicacion"](num1, num2))
+elif opcion == 4:
+    print(diccionario["division"](num1, num2))
+else:
+    print("Operacion no valida")
+
 class Calculadora:
     @staticmethod
     def suma(a,b):

@@ -18,103 +18,128 @@ pasos para hacer esto
 7. crear una funcion que permita salir del programa
 
 '''
-import sys
-#ahora vamos a hacer una clase que haga lo mismo que el diccionario pero con metodos de clase y metodos estaticos y vamos a hacer que el programa sea un menu que se repita hasta que el usuario decida salir del programa
+import json
+import re
 
-class gestroContactos:
-    contactos = {
-        "nombre": [],
-        "telefono": [],
-        "email": []
-    }
+class Contacto:
+    def __init__(self, nombre, telefono, email):
+        self.nombre = nombre
+        self.telefono = telefono
+        self.email = email
 
-    @classmethod
-    def agregar_contacto(cls):
-        nombre = input("Ingrese el nombre de la persona: ")
-        telefono = input("Ingrese el teléfono de la persona: ")
-        email = input("Ingrese el email de la persona: ")
-        cls.contactos["nombre"].append(nombre)
-        cls.contactos["telefono"].append(telefono)
-        cls.contactos["email"].append(email)
-        print("Contacto agregado correctamente")
-        print(cls.contactos)
-        return cls.contactos
+    def __str__(self):
+        return f"Nombre: {self.nombre}, Teléfono: {self.telefono}, Email: {self.email}"
 
-    @classmethod
-    def buscar_contacto(cls):
-        nombre = input("Ingrese el nombre de la persona que desea buscar: ")
-        for i in range(len(cls.contactos["nombre"])):
-            if cls.contactos["nombre"][i] == nombre:
-                print("Nombre: ", cls.contactos["nombre"][i])
-                print("Teléfono: ", cls.contactos["telefono"][i])
-                print("Email: ", cls.contactos["email"][i])
-                break
-        else:
-            print("Contacto no encontrado")
+class GestorContactos:
+    def __init__(self):
+        self.contactos = {}
 
-    @classmethod
-    def actualizar_contacto(cls):
-        nombre = input('Ingrese el nombre de la persona que quiere actualizar: ')
-        if nombre not in cls.contactos['nombre']:
-            print(f"El contacto {nombre} no existe")
-            return
-        for i in range(len(cls.contactos['nombre'])):
-            if cls.contactos['nombre'][i] == nombre:
-                cls.contactos['nombre'][i] = input('Ingrese el nuevo nombre: ')
-                cls.contactos['telefono'][i] = input('Ingrese el nuevo teléfono: ')
-                cls.contactos['email'][i] = input('Ingrese el nuevo email: ')
-                print('Contacto actualizado correctamente')
-                print(cls.contactos)
-                break
+    def agregar_contacto(self, contacto):
+        self.contactos[contacto.nombre] = contacto
 
-    @classmethod
-    def eliminar_contacto(cls):
-        nombre = input("Ingrese el nombre de la persona que quiere eliminar: ")
-        for i in range(len(cls.contactos["nombre"])):
-            if cls.contactos["nombre"][i] == nombre:
-                cls.contactos["nombre"].pop(i)
-                cls.contactos["telefono"].pop(i)
-                cls.contactos["email"].pop(i)
-                print("Contacto eliminado correctamente")
-                print(cls.contactos)
-                break
-        else:
-            print("Contacto no encontrado")
+    def buscar_contacto(self, nombre):
+        return self.contactos.get(nombre, None)
 
-    @classmethod
-    def ver_contactos(cls):
-        if len(cls.contactos["nombre"]) == 0:
+    def actualizar_contacto(self, nombre, nuevo_contacto):
+        if nombre in self.contactos:
+            self.contactos[nombre] = nuevo_contacto
+            return True
+        return False
+
+    def eliminar_contacto(self, nombre):
+        if nombre in self.contactos:
+            del self.contactos[nombre]
+            return True
+        return False
+
+    def ver_contactos(self):
+        if not self.contactos:
             print("No hay contactos para mostrar")
         else:
-            for i in range(len(cls.contactos["nombre"])):
-                print("Nombre: ", cls.contactos["nombre"][i])
-                print("Teléfono: ", cls.contactos["telefono"][i])
-                print("Email: ", cls.contactos["email"][i])
-                print("|-----------------|")
+            for contacto in self.contactos.values():
+                print(contacto)
 
+    def guardar_contactos(self, archivo='contactos.json'):
+        with open(archivo, 'w') as f:
+            json.dump([contacto.__dict__ for contacto in self.contactos.values()], f)
 
-gestor = gestroContactos()
+    def cargar_contactos(self, archivo='contactos.json'):
+        try:
+            with open(archivo, 'r') as f:
+                data = json.load(f)
+                self.contactos = {contacto['nombre']: Contacto(**contacto) for contacto in data}
+        except FileNotFoundError:
+            self.contactos = {}
+
+def validar_email(email):
+    patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$' # formato de email
+    return re.match(patron, email) is not None
+
+def validar_telefono(telefono):
+    return telefono.isdigit() # esto para validar que sean numeros
+
 def main():
+    gestor = GestorContactos()
+    gestor.cargar_contactos()
+
     while True:
         print("\nBienvenido al gestor de contactos")
         opcion = input("1. Agregar contacto\n2. Buscar contacto\n3. Actualizar contacto\n4. Eliminar contacto\n5. Ver contactos\n6. Salir\n")
-        match opcion:
-            case "1":
-                gestor.agregar_contacto()
-            case "2":
-               gestor.buscar_contacto()
-            case "3":
-                gestor.actualizar_contacto()
-            case "4":
-                gestor.eliminar_contacto()
-            case "5":
-                gestor.ver_contactos()
-            case "6":
-                False
-                print('Gracias por usar el gestor de contactos')
-                break
-            case _:
-                print("Opción no válida")
+
+        if opcion == "1":
+            nombre = input("Ingrese el nombre de la persona: ")
+            telefono = input("Ingrese el teléfono de la persona: ")
+            email = input("Ingrese el email de la persona: ")
+            if validar_telefono(telefono) and validar_email(email):
+                contacto = Contacto(nombre, telefono, email)
+                gestor.agregar_contacto(contacto)
+                print("Contacto agregado correctamente")
+            else:
+                print("Teléfono o email no válido")
+
+        elif opcion == "2":
+            nombre = input("Ingrese el nombre de la persona que desea buscar: ")
+            contacto = gestor.buscar_contacto(nombre)
+            if contacto:
+                print(contacto)
+            else:
+                print("Contacto no encontrado")
+
+        elif opcion == "3":
+            nombre = input('Ingrese el nombre de la persona que quiere actualizar: ')
+            contacto = gestor.buscar_contacto(nombre)
+            if contacto:
+                nuevo_nombre = input('Ingrese el nuevo nombre: ')
+                nuevo_telefono = input('Ingrese el nuevo teléfono: ')
+                nuevo_email = input('Ingrese el nuevo email: ')
+                if validar_telefono(nuevo_telefono) and validar_email(nuevo_email):
+                    nuevo_contacto = Contacto(nuevo_nombre, nuevo_telefono, nuevo_email)
+                    gestor.actualizar_contacto(nombre, nuevo_contacto)
+                    print('Contacto actualizado correctamente')
+                else:
+                    print("Teléfono o email no válido")
+            else:
+                print("Contacto no encontrado")
+
+        elif opcion == "4":
+            nombre = input("Ingrese el nombre de la persona que quiere eliminar: ")
+            if gestor.eliminar_contacto(nombre):
+                print("Contacto eliminado correctamente")
+            else:
+                print("Contacto no encontrado")
+
+        elif opcion == "5":
+            gestor.ver_contactos()
+
+        elif opcion == "6":
+            gestor.guardar_contactos()
+            print('Gracias por usar el gestor de contactos')
+            break
+
+        else:
+            print("Opción no válida")
 
 if __name__ == "__main__":
     main()
+
+
